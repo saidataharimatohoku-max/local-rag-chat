@@ -1,7 +1,8 @@
-"""Ingest Markdown documents from the data/ folder into the vector index.
+"""Ingest documents from the data/ folder into the vector index.
 
-Uses Azure AI Search when Azure is configured, otherwise builds a local
-on-disk index for Ollama-based retrieval.
+Supports Markdown (.md), plain text (.txt), PDF (.pdf), and Word (.docx)
+files. Uses Azure AI Search when Azure is configured, otherwise builds a
+local on-disk index for Ollama-based retrieval.
 
 Usage:
     python -m backend.ingest
@@ -19,6 +20,7 @@ from .config import get_settings
 CHUNK_SIZE = 800
 CHUNK_OVERLAP = 100
 DATA_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data")
+SUPPORTED_EXTENSIONS = (".md", ".txt", ".pdf", ".docx")
 
 
 def chunk_text(text: str, size: int = CHUNK_SIZE, overlap: int = CHUNK_OVERLAP):
@@ -87,12 +89,48 @@ def embed(text: str) -> list[float]:
     return response.data[0].embedding
 
 
+def _read_text_file(path: str) -> str:
+    """Read a Markdown or plain-text file."""
+    with open(path, encoding="utf-8") as handle:
+        return handle.read()
+
+
+def _read_pdf(path: str) -> str:
+    """Extract text from a PDF file."""
+    from pypdf import PdfReader
+
+    reader = PdfReader(path)
+    return "\n".join(page.extract_text() or "" for page in reader.pages)
+
+
+def _read_docx(path: str) -> str:
+    """Extract text from a Word .docx file."""
+    from docx import Document
+
+    document = Document(path)
+    return "\n".join(paragraph.text for paragraph in document.paragraphs)
+
+
+def read_document(path: str) -> str:
+    """Read a document's text based on its file extension."""
+    extension = os.path.splitext(path)[1].lower()
+    if extension in (".md", ".txt"):
+        return _read_text_file(path)
+    if extension == ".pdf":
+        return _read_pdf(path)
+    if extension == ".docx":
+        return _read_docx(path)
+    raise ValueError(f"Unsupported file type: {extension}")
+
+
 def _read_chunks():
-    """Yield (title, chunk) tuples for every Markdown file in data/."""
-    for path in glob.glob(os.path.join(DATA_DIR, "*.md")):
+    """Yield (title, chunk) tuples for every supported file in data/."""
+    for path in sorted(glob.glob(os.path.join(DATA_DIR, "*"))):
+        extension = os.path.splitext(path)[1].lower()
+        if extension not in SUPPORTED_EXTENSIONS:
+            continue
         title = os.path.splitext(os.path.basename(path))[0]
-        with open(path, encoding="utf-8") as handle:
-            text = handle.read()
+        text = read_document(path)
         for chunk in chunk_text(text):
             yield title, chunk
 

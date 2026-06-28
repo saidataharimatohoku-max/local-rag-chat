@@ -18,7 +18,7 @@ only that context, citing its sources — so it doesn't make things up.
 ```
 backend/      FastAPI app, RAG pipeline, ingestion, clients, config
 frontend/     Static chat UI (HTML/CSS/JS)
-data/         Source documents to index (Markdown)
+data/         Source documents to index (.md, .txt, .pdf, .docx)
 infra/        Azure Bicep templates (Search + Web App)
 .github/      CI/CD workflow
 ```
@@ -89,7 +89,8 @@ configured, otherwise it runs fully locally with Ollama. Force it with the
 
 ## How it works
 
-1. `ingest.py` chunks each document in `data/`, embeds the chunks (Azure OpenAI
+1. `ingest.py` reads every supported document in `data/` (Markdown, plain
+   text, PDF, and Word `.docx`), chunks it, embeds the chunks (Azure OpenAI
    or local Ollama), and stores them in Azure AI Search or a local index.
 2. On a question, `rag.py` embeds the query, retrieves the top matching chunks,
    and asks the chat model to answer using only that context.
