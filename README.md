@@ -1,5 +1,7 @@
 # RAG Chat
 
+[![Tests](https://github.com/saidataharimatohoku-max/local-rag-chat/actions/workflows/tests.yml/badge.svg)](https://github.com/saidataharimatohoku-max/local-rag-chat/actions/workflows/tests.yml)
+
 A minimal Retrieval-Augmented Generation (RAG) application: a Python FastAPI
 backend, a static web frontend, and Azure infrastructure to host it. It answers
 questions grounded in your own Markdown documents using Azure OpenAI for
@@ -11,10 +13,11 @@ and free** with [Ollama](https://ollama.com) — no cloud account required.
 ![RAG Chat answering a question grounded in a source document](docs/demo.png)
 
 The app retrieves the most relevant chunks from your documents and answers using
-only that context, citing its sources — so it doesn't make things up. You can
-add documents straight from the browser with the **+ Add document** button
-(Markdown, plain text, PDF, or Word), or drop files into the `data/` folder and
-run the ingest command.
+only that context, citing its sources — so it doesn't make things up. Answers
+**stream in token-by-token**, and each cited source expands to show the exact
+retrieved text. You can add documents straight from the browser with the
+**+ Add document** button (Markdown, plain text, PDF, or Word), or drop files
+into the `data/` folder and run the ingest command.
 
 ## Project structure
 
@@ -97,7 +100,9 @@ configured, otherwise it runs fully locally with Ollama. Force it with the
    or local Ollama), and stores them in Azure AI Search or a local index.
 2. On a question, `rag.py` embeds the query, retrieves the top matching chunks,
    and asks the chat model to answer using only that context.
-3. `app.py` serves the `/api/chat` endpoint and the static frontend.
+3. `app.py` serves the static frontend, a JSON `/api/chat` endpoint, and a
+   streaming `/api/chat/stream` endpoint (Server-Sent Events) that the UI uses
+   to render answers token-by-token.
 
 ## Tests
 

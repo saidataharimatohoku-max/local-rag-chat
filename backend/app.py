@@ -1,16 +1,17 @@
 """FastAPI application exposing the RAG chat endpoint and static frontend."""
 from __future__ import annotations
 
+import json
 import os
 
 from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from .ingest import DATA_DIR, SUPPORTED_EXTENSIONS, ingest
-from .rag import answer_question
+from .rag import answer_question, stream_answer
 
 FRONTEND_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "frontend")
 
@@ -56,6 +57,27 @@ def chat(request: ChatRequest) -> ChatResponse:
         answer=result.text,
         sources=[SourceModel(title=s.title, content=s.content) for s in result.sources],
     )
+
+
+def _sse(event: str, data) -> str:
+    return f"event: {event}\ndata: {json.dumps(data)}\n\n"
+
+
+@app.post("/api/chat/stream")
+def chat_stream(request: ChatRequest) -> StreamingResponse:
+    """Stream the answer token-by-token as Server-Sent Events."""
+    sources, tokens = stream_answer(request.question)
+
+    def event_stream():
+        yield _sse(
+            "sources",
+            [{"title": s.title, "content": s.content} for s in sources],
+        )
+        for token in tokens:
+            yield _sse("token", token)
+        yield _sse("done", {})
+
+    return StreamingResponse(event_stream(), media_type="text/event-stream")
 
 
 @app.post("/api/upload", response_model=UploadResponse)

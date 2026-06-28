@@ -35,6 +35,27 @@ def test_chat_requires_question():
     assert response.status_code == 422
 
 
+def test_chat_stream_emits_sources_and_tokens(monkeypatch):
+    sources = [Source(title="handbook", content="20 days of vacation")]
+    monkeypatch.setattr(
+        app_module,
+        "stream_answer",
+        lambda q: (sources, iter(["Full-time ", "employees ", "get 20 days."])),
+    )
+
+    response = client.post("/api/chat/stream", json={"question": "vacation?"})
+    assert response.status_code == 200
+    assert response.headers["content-type"].startswith("text/event-stream")
+
+    body = response.text
+    assert "event: sources" in body
+    assert "handbook" in body
+    assert "event: token" in body
+    assert "Full-time " in body
+    assert "event: done" in body
+
+
+
 def test_upload_indexes_supported_file(monkeypatch, tmp_path):
     monkeypatch.setattr(app_module, "DATA_DIR", str(tmp_path))
     monkeypatch.setattr(app_module, "ingest", lambda: 3)

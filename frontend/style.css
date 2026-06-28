@@ -128,12 +128,42 @@ header h1 {
   color: var(--muted);
 }
 
-.sources span {
+.sources-label {
+  display: block;
+  margin-bottom: 4px;
+}
+
+.source {
   display: inline-block;
   background: #eef3fb;
   border-radius: 6px;
   padding: 2px 8px;
   margin: 2px 4px 0 0;
+  vertical-align: top;
+}
+
+.source summary {
+  cursor: pointer;
+  list-style: none;
+  color: var(--accent-dark);
+}
+
+.source summary::-webkit-details-marker {
+  display: none;
+}
+
+.source[open] {
+  display: block;
+  background: #f7f9fd;
+  border: 1px solid var(--border);
+  padding: 8px 10px;
+}
+
+.snippet {
+  margin-top: 6px;
+  color: var(--text);
+  white-space: pre-wrap;
+  line-height: 1.4;
 }
 
 .chat-form {

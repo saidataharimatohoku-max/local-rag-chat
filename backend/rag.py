@@ -77,15 +77,59 @@ def answer_question(question: str) -> Answer:
 
     client, chat_model, _ = llm
     sources = retrieve(question)
-    context = "\n\n".join(f"[{s.title}]\n{s.content}" for s in sources)
-    user_content = f"Context:\n{context}\n\nQuestion: {question}"
+    messages = _build_messages(question, sources)
 
     completion = client.chat.completions.create(
         model=chat_model,
-        messages=[
-            {"role": "system", "content": SYSTEM_PROMPT},
-            {"role": "user", "content": user_content},
-        ],
+        messages=messages,
         temperature=0.2,
     )
     return Answer(text=completion.choices[0].message.content, sources=sources)
+
+
+def _build_messages(question: str, sources: list[Source]) -> list[dict]:
+    context = "\n\n".join(f"[{s.title}]\n{s.content}" for s in sources)
+    user_content = f"Context:\n{context}\n\nQuestion: {question}"
+    return [
+        {"role": "system", "content": SYSTEM_PROMPT},
+        {"role": "user", "content": user_content},
+    ]
+
+
+def stream_answer(question: str):
+    """Return (sources, token_iterator) for a streamed RAG answer.
+
+    The token iterator yields successive pieces of the answer text as the
+    model generates them.
+    """
+    llm = get_llm()
+
+    if llm is None:
+        def _unconfigured():
+            yield (
+                "No language model is configured. Set Azure OpenAI credentials, "
+                "or run Ollama locally (PROVIDER=local)."
+            )
+
+        return [], _unconfigured()
+
+    client, chat_model, _ = llm
+    sources = retrieve(question)
+    messages = _build_messages(question, sources)
+
+    def _tokens():
+        stream = client.chat.completions.create(
+            model=chat_model,
+            messages=messages,
+            temperature=0.2,
+            stream=True,
+        )
+        for chunk in stream:
+            if not chunk.choices:
+                continue
+            delta = chunk.choices[0].delta.content
+            if delta:
+                yield delta
+
+    return sources, _tokens()
+
