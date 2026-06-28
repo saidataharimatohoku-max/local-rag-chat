@@ -25,22 +25,24 @@ Local RAG Chat is a full-stack Retrieval-Augmented Generation (RAG) application 
 
 A Python/FastAPI backend ingests multi-format documents (Markdown, PDF, Word, and text), splits and embeds them into a vector index, and streams grounded answers token-by-token to a clean web UI with drag-and-drop upload and expandable source snippets.
 
-It runs fully offline and free with Ollama, or scales to Azure OpenAI + Azure AI Search by changing configuration only — no code changes. Engineered with a 35-test pytest suite (79% coverage), GitHub Actions CI, and Azure Bicep infrastructure-as-code.
+It also ships an optional agentic mode: an agent loop routes each question (answer, search, or ask a clarifying question), self-evaluates whether the retrieved context is sufficient, and automatically rephrases and retries the search before answering — exposing its reasoning steps in the UI.
 
-Tech: Python · FastAPI · RAG · LLMs · Ollama · Azure OpenAI · Azure AI Search · Vector Search · REST APIs · pytest · CI/CD · Bicep · JavaScript
+It runs fully offline and free with Ollama, or scales to Azure OpenAI + Azure AI Search by changing configuration only — no code changes. Engineered with a 48-test pytest suite (81% coverage), GitHub Actions CI, and Azure Bicep infrastructure-as-code.
+
+Tech: Python · FastAPI · RAG · AI Agents · LLMs · Ollama · Azure OpenAI · Azure AI Search · Vector Search · REST APIs · pytest · CI/CD · Bicep · JavaScript
 ```
 
 ## Description — short version (2–3 sentences)
 
 ```
-Built a full-stack Retrieval-Augmented Generation (RAG) app that answers questions from your own documents and cites its sources — streaming answers token-by-token with expandable source snippets. Runs fully offline and free with Ollama, or on Azure OpenAI + Azure AI Search by changing configuration only. Shipped with 35 automated tests (79% coverage), CI, and Bicep infrastructure-as-code.
+Built a full-stack Retrieval-Augmented Generation (RAG) app that answers questions from your own documents and cites its sources — streaming answers token-by-token with expandable source snippets. Added an agentic mode that routes questions, self-evaluates retrieval, and rephrases-and-retries before answering. Runs fully offline and free with Ollama, or on Azure OpenAI + Azure AI Search by changing configuration only; shipped with 48 automated tests (81% coverage), CI, and Bicep infrastructure-as-code.
 ```
 
 ---
 
 ## Skills to tag
 
-`Python` · `FastAPI` · `Retrieval-Augmented Generation (RAG)` · `Large Language Models (LLM)` ·
+`Python` · `FastAPI` · `Retrieval-Augmented Generation (RAG)` · `AI Agents` · `Large Language Models (LLM)` ·
 `Azure OpenAI` · `Azure AI Search` · `Vector Databases` · `REST APIs` ·
 `Test-Driven Development` · `CI/CD` · `Infrastructure as Code (Bicep)` · `JavaScript`
 
@@ -54,13 +56,14 @@ Built a full-stack Retrieval-Augmented Generation (RAG) app that answers questio
 What it does:
 📄 Ingests Markdown, PDF, Word & text — upload right in the browser (drag & drop)
 💬 Streams answers token-by-token, with expandable source snippets
+🤖 Optional agentic mode — routes questions, self-checks retrieval, and rephrases-and-retries before answering
 🔌 Runs 100% free & offline with Ollama, or scales to Azure OpenAI + AI Search via config only
-✅ 35 automated tests (79% coverage) + CI + Bicep infrastructure-as-code
+✅ 48 automated tests (81% coverage) + CI + Bicep infrastructure-as-code
 
 Built with Python, FastAPI, and a focus on clean engineering. Code + docs here 👇
 https://github.com/saidataharimatohoku-max/local-rag-chat
 
-#Python #RAG #LLM #Azure #SoftwareEngineering #AI
+#Python #RAG #LLM #AIAgents #Azure #SoftwareEngineering #AI
 ```
 
 ---
