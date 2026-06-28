@@ -72,7 +72,7 @@ stack = [
     ("Documents", "pypdf, python-docx"),
     ("Frontend", "Vanilla HTML, CSS, JavaScript (Server-Sent Events)"),
     ("Infra", "Azure Bicep (AI Search + Linux Python Web App)"),
-    ("Testing / CI", "pytest, FastAPI TestClient, GitHub Actions"),
+    ("Testing / CI", "pytest, pytest-cov, FastAPI TestClient, GitHub Actions"),
 ]
 table = doc.add_table(rows=1, cols=2)
 table.style = "Light Grid Accent 1"
@@ -116,10 +116,13 @@ run.font.size = Pt(9)
 
 doc.add_heading("Testing", level=1)
 doc.add_paragraph(
-    "The suite (25 tests) covers text chunking, the on-disk vector store, "
-    "multi-format document reading, provider selection, and the API endpoints "
-    "(chat, streaming, upload, validation, and a path-traversal security check). "
-    "It runs fully offline because the language model is mocked."
+    "The suite (35 tests) covers text chunking, the on-disk vector store, "
+    "multi-format document reading, provider selection, the RAG pipeline "
+    "internals (retrieval, prompt building, answer and streaming generation, "
+    "and the unconfigured-model paths), and the API endpoints (chat, streaming, "
+    "upload, validation, document list, and a path-traversal security check). "
+    "It runs fully offline because the language model is mocked, and reports "
+    "about 79% line coverage of the backend."
 )
 
 doc.add_heading("Security notes", level=1)

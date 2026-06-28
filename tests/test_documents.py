@@ -1,6 +1,7 @@
 """Tests for multi-format document reading."""
 import pytest
 
+from backend import ingest as ingest_module
 from backend.ingest import read_document
 
 
@@ -35,3 +36,18 @@ def test_unsupported_extension_raises(tmp_path):
     path.write_text("a,b,c", encoding="utf-8")
     with pytest.raises(ValueError):
         read_document(str(path))
+
+
+def test_list_documents_filters_supported(monkeypatch, tmp_path):
+    (tmp_path / "a.md").write_text("x", encoding="utf-8")
+    (tmp_path / "b.csv").write_text("x", encoding="utf-8")
+    (tmp_path / "c.docx").write_bytes(b"PK")
+    monkeypatch.setattr(ingest_module, "DATA_DIR", str(tmp_path))
+
+    docs = ingest_module.list_documents()
+    assert docs == ["a.md", "c.docx"]
+
+
+def test_ingest_empty_data_returns_zero(monkeypatch, tmp_path):
+    monkeypatch.setattr(ingest_module, "DATA_DIR", str(tmp_path))
+    assert ingest_module.ingest() == 0

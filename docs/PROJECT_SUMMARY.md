@@ -75,7 +75,7 @@ force either mode.
 | Documents    | pypdf, python-docx                                      |
 | Frontend     | Vanilla HTML, CSS, JavaScript (Server-Sent Events)      |
 | Infra        | Azure Bicep (AI Search + Linux Python Web App)          |
-| Testing / CI | pytest, FastAPI TestClient, GitHub Actions              |
+| Testing / CI | pytest, pytest-cov, FastAPI TestClient, GitHub Actions   |
 
 ## Project structure
 
@@ -115,10 +115,12 @@ python -m venv .venv
 .venv\Scripts\python.exe -m pytest
 ```
 
-The suite (25 tests) covers text chunking, the on-disk vector store, multi-format
-document reading, provider selection, and the API endpoints (chat, streaming,
-upload, validation, and a path-traversal security check). It runs fully offline
-because the language model is mocked.
+The suite (35 tests) covers text chunking, the on-disk vector store, multi-format
+document reading, provider selection, the RAG pipeline internals (retrieval,
+prompt building, answer and streaming generation, and the unconfigured-model
+paths), and the API endpoints (chat, streaming, upload, validation, document
+list, and a path-traversal security check). It runs fully offline because the
+language model is mocked, and reports ~79% line coverage of the backend.
 
 ## Security notes
 

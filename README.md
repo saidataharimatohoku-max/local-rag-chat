@@ -1,6 +1,7 @@
 # RAG Chat
 
 [![Tests](https://github.com/saidataharimatohoku-max/local-rag-chat/actions/workflows/tests.yml/badge.svg)](https://github.com/saidataharimatohoku-max/local-rag-chat/actions/workflows/tests.yml)
+[![Coverage](docs/coverage.svg)](docs/coverage.svg)
 
 A minimal Retrieval-Augmented Generation (RAG) application: a Python FastAPI
 backend, a static web frontend, and Azure infrastructure to host it. It answers
@@ -116,9 +117,18 @@ Ollama or Azure account is needed:
 ```
 
 They cover text chunking, the on-disk vector store, multi-format document
-reading, provider selection, and the API endpoints (chat, upload, validation).
+reading, provider selection, the RAG pipeline internals (retrieval, prompt
+building, answer and streaming generation, and the unconfigured-model paths),
+and the API endpoints (chat, streaming, upload, validation, document list).
 The same suite runs on every push via GitHub Actions
 (`.github/workflows/tests.yml`).
+
+To measure coverage and refresh the badge:
+
+```powershell
+.venv\Scripts\python.exe -m pytest --cov=backend --cov-report=term-missing
+.venv\Scripts\python.exe scripts\generate_coverage_badge.py
+```
 
 ## Deploy to Azure
 
