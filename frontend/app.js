@@ -60,13 +60,19 @@ form.addEventListener("submit", async (event) => {
   }
 });
 
-uploadButton.addEventListener("click", () => fileInput.click());
+uploadButton.addEventListener("keydown", (event) => {
+  if (event.key === "Enter" || event.key === " ") {
+    event.preventDefault();
+    fileInput.click();
+  }
+});
 
 fileInput.addEventListener("change", async () => {
   const file = fileInput.files[0];
   if (!file) return;
 
-  uploadButton.disabled = true;
+  fileInput.disabled = true;
+  uploadButton.classList.add("disabled");
   uploadStatus.className = "upload-status";
   uploadStatus.textContent = `Indexing “${file.name}”…`;
 
@@ -83,7 +89,8 @@ fileInput.addEventListener("change", async () => {
     uploadStatus.classList.add("error");
     uploadStatus.textContent = `Error: ${error.message}`;
   } finally {
-    uploadButton.disabled = false;
+    fileInput.disabled = false;
+    uploadButton.classList.remove("disabled");
     fileInput.value = "";
   }
 });
