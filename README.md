@@ -11,7 +11,10 @@ and free** with [Ollama](https://ollama.com) — no cloud account required.
 ![RAG Chat answering a question grounded in a source document](docs/demo.png)
 
 The app retrieves the most relevant chunks from your documents and answers using
-only that context, citing its sources — so it doesn't make things up.
+only that context, citing its sources — so it doesn't make things up. You can
+add documents straight from the browser with the **+ Add document** button
+(Markdown, plain text, PDF, or Word), or drop files into the `data/` folder and
+run the ingest command.
 
 ## Project structure
 

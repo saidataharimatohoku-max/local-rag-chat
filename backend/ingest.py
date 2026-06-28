@@ -135,7 +135,7 @@ def _read_chunks():
             yield title, chunk
 
 
-def ingest() -> None:
+def ingest() -> int:
     settings = get_settings()
     documents = [
         {
@@ -149,7 +149,7 @@ def ingest() -> None:
 
     if not documents:
         print("No documents found in data/.")
-        return
+        return 0
 
     if settings.provider == "azure":
         ensure_index()
@@ -161,6 +161,8 @@ def ingest() -> None:
             f"Ingested {len(documents)} chunks into local index "
             f"({settings.local_index_path})."
         )
+
+    return len(documents)
 
 
 if __name__ == "__main__":

@@ -2,6 +2,9 @@ const form = document.getElementById("chat-form");
 const input = document.getElementById("question");
 const messages = document.getElementById("messages");
 const button = form.querySelector("button");
+const fileInput = document.getElementById("file-input");
+const uploadButton = document.getElementById("upload-button");
+const uploadStatus = document.getElementById("upload-status");
 
 function addBubble(text, role) {
   const bubble = document.createElement("div");
@@ -54,5 +57,33 @@ form.addEventListener("submit", async (event) => {
   } finally {
     button.disabled = false;
     input.focus();
+  }
+});
+
+uploadButton.addEventListener("click", () => fileInput.click());
+
+fileInput.addEventListener("change", async () => {
+  const file = fileInput.files[0];
+  if (!file) return;
+
+  uploadButton.disabled = true;
+  uploadStatus.className = "upload-status";
+  uploadStatus.textContent = `Indexing “${file.name}”…`;
+
+  const body = new FormData();
+  body.append("file", file);
+
+  try {
+    const response = await fetch("/api/upload", { method: "POST", body });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.detail || `Failed: ${response.status}`);
+    uploadStatus.classList.add("ok");
+    uploadStatus.textContent = data.message;
+  } catch (error) {
+    uploadStatus.classList.add("error");
+    uploadStatus.textContent = `Error: ${error.message}`;
+  } finally {
+    uploadButton.disabled = false;
+    fileInput.value = "";
   }
 });

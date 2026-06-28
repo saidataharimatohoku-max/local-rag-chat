@@ -38,6 +38,46 @@ header h1 {
   color: var(--muted);
 }
 
+.upload-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.upload-button {
+  padding: 7px 14px;
+  background: var(--panel);
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.upload-button:hover {
+  background: #eef3fb;
+}
+
+.upload-button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.upload-status {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.upload-status.ok {
+  color: #137333;
+}
+
+.upload-status.error {
+  color: #c5221f;
+}
+
 .messages {
   flex: 1;
   overflow-y: auto;

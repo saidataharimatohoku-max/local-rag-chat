@@ -3,12 +3,13 @@ from __future__ import annotations
 
 import os
 
-from fastapi import FastAPI
+from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
+from .ingest import DATA_DIR, SUPPORTED_EXTENSIONS, ingest
 from .rag import answer_question
 
 FRONTEND_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "frontend")
@@ -37,6 +38,12 @@ class ChatResponse(BaseModel):
     sources: list[SourceModel]
 
 
+class UploadResponse(BaseModel):
+    filename: str
+    chunks: int
+    message: str
+
+
 @app.get("/api/health")
 def health() -> dict[str, str]:
     return {"status": "ok"}
@@ -48,6 +55,35 @@ def chat(request: ChatRequest) -> ChatResponse:
     return ChatResponse(
         answer=result.text,
         sources=[SourceModel(title=s.title, content=s.content) for s in result.sources],
+    )
+
+
+@app.post("/api/upload", response_model=UploadResponse)
+async def upload(file: UploadFile = File(...)) -> UploadResponse:
+    """Save an uploaded document to data/ and rebuild the index."""
+    filename = os.path.basename(file.filename or "")
+    if not filename:
+        raise HTTPException(status_code=400, detail="No filename provided.")
+
+    extension = os.path.splitext(filename)[1].lower()
+    if extension not in SUPPORTED_EXTENSIONS:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Unsupported file type '{extension}'. "
+            f"Allowed: {', '.join(SUPPORTED_EXTENSIONS)}.",
+        )
+
+    os.makedirs(DATA_DIR, exist_ok=True)
+    destination = os.path.join(DATA_DIR, filename)
+    contents = await file.read()
+    with open(destination, "wb") as handle:
+        handle.write(contents)
+
+    chunks = ingest()
+    return UploadResponse(
+        filename=filename,
+        chunks=chunks,
+        message=f"Indexed '{filename}'. Knowledge base now has {chunks} chunks.",
     )
 
 

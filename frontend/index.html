@@ -11,6 +11,18 @@
       <header>
         <h1>RAG Chat</h1>
         <p class="subtitle">Ask questions grounded in your documents.</p>
+        <div class="upload-bar">
+          <input
+            id="file-input"
+            type="file"
+            accept=".md,.txt,.pdf,.docx"
+            hidden
+          />
+          <button id="upload-button" type="button" class="upload-button">
+            + Add document
+          </button>
+          <span id="upload-status" class="upload-status"></span>
+        </div>
       </header>
 
       <section id="messages" class="messages" aria-live="polite"></section>
