@@ -1,4 +1,4 @@
-# RAG Chat
+# Local RAG Chat — AI Document Q&A with Cited Sources
 
 [![Tests](https://github.com/saidataharimatohoku-max/local-rag-chat/actions/workflows/tests.yml/badge.svg)](https://github.com/saidataharimatohoku-max/local-rag-chat/actions/workflows/tests.yml)
 [![Coverage](docs/coverage.svg)](docs/coverage.svg)

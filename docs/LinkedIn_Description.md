@@ -7,7 +7,7 @@ Ready-to-paste content for the LinkedIn **Projects** section (and Featured/posts
 ## Project name
 
 ```
-Local RAG Chat — Retrieval-Augmented Generation App
+Local RAG Chat — AI Document Q&A with Cited Sources
 ```
 
 ## Project URL
