@@ -3,7 +3,15 @@
 A minimal Retrieval-Augmented Generation (RAG) application: a Python FastAPI
 backend, a static web frontend, and Azure infrastructure to host it. It answers
 questions grounded in your own Markdown documents using Azure OpenAI for
-embeddings/chat and Azure AI Search for retrieval.
+embeddings/chat and Azure AI Search for retrieval. It also runs **fully local
+and free** with [Ollama](https://ollama.com) — no cloud account required.
+
+## Demo
+
+![RAG Chat answering a question grounded in a source document](docs/demo.png)
+
+The app retrieves the most relevant chunks from your documents and answers using
+only that context, citing its sources — so it doesn't make things up.
 
 ## Project structure
 
