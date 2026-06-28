@@ -3,6 +3,8 @@
 [![Tests](https://github.com/saidataharimatohoku-max/local-rag-chat/actions/workflows/tests.yml/badge.svg)](https://github.com/saidataharimatohoku-max/local-rag-chat/actions/workflows/tests.yml)
 [![Coverage](docs/coverage.svg)](docs/coverage.svg)
 
+> Ask questions about your own documents and get streamed, source-cited answers — running fully offline and free with Ollama, or on Azure OpenAI + AI Search.
+
 A minimal Retrieval-Augmented Generation (RAG) application: a Python FastAPI
 backend, a static web frontend, and Azure infrastructure to host it. It answers
 questions grounded in your own Markdown documents using Azure OpenAI for
