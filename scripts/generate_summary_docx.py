@@ -33,7 +33,7 @@ for feat in [
     "Grounded answers with citations — each cited source is an expandable snippet of the retrieved text.",
     "Streaming responses — answers render token-by-token via Server-Sent Events.",
     "Multi-format ingestion — Markdown (.md), text (.txt), PDF (.pdf), and Word (.docx).",
-    "In-browser upload — add a document with the + Add document button and it is indexed immediately.",
+    "In-browser upload — add a document with the + Add document button or by dragging and dropping it onto the page; it is indexed immediately and the indexed-document list refreshes.",
     "Local-first and free — Ollama with llama3.2:1b (chat) and nomic-embed-text (embeddings); a NumPy cosine-similarity store replaces a cloud vector database.",
     "Cloud-ready — the same code targets Azure OpenAI and Azure AI Search via environment variables; Bicep templates included.",
     "Tested + CI — a pytest suite runs offline (the model is mocked) and on every push via GitHub Actions.",
@@ -116,7 +116,7 @@ run.font.size = Pt(9)
 
 doc.add_heading("Testing", level=1)
 doc.add_paragraph(
-    "The suite (24 tests) covers text chunking, the on-disk vector store, "
+    "The suite (25 tests) covers text chunking, the on-disk vector store, "
     "multi-format document reading, provider selection, and the API endpoints "
     "(chat, streaming, upload, validation, and a path-traversal security check). "
     "It runs fully offline because the language model is mocked."
@@ -140,7 +140,6 @@ doc.add_heading("Possible future enhancements", level=1)
 for item in [
     "Conversation memory for follow-up questions.",
     "Heading- or paragraph-aware chunking for more precise retrieval.",
-    "Drag-and-drop upload and a document management view.",
     "Dockerfile + docker-compose (app + Ollama) for one-command setup.",
     "Authentication and per-user document collections.",
 ]:

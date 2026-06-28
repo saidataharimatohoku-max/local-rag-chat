@@ -10,7 +10,7 @@ from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
-from .ingest import DATA_DIR, SUPPORTED_EXTENSIONS, ingest
+from .ingest import DATA_DIR, SUPPORTED_EXTENSIONS, ingest, list_documents
 from .rag import answer_question, stream_answer
 
 FRONTEND_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "frontend")
@@ -48,6 +48,12 @@ class UploadResponse(BaseModel):
 @app.get("/api/health")
 def health() -> dict[str, str]:
     return {"status": "ok"}
+
+
+@app.get("/api/documents")
+def documents() -> dict[str, list[str]]:
+    """List the indexed source documents in data/."""
+    return {"documents": list_documents()}
 
 
 @app.post("/api/chat", response_model=ChatResponse)

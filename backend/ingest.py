@@ -135,6 +135,15 @@ def _read_chunks():
             yield title, chunk
 
 
+def list_documents() -> list[str]:
+    """Return the filenames of every supported document in data/, sorted."""
+    names = []
+    for path in sorted(glob.glob(os.path.join(DATA_DIR, "*"))):
+        if os.path.splitext(path)[1].lower() in SUPPORTED_EXTENSIONS:
+            names.append(os.path.basename(path))
+    return names
+
+
 def ingest() -> int:
     settings = get_settings()
     documents = [

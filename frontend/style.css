@@ -91,6 +91,45 @@ header h1 {
   color: #c5221f;
 }
 
+.dropzone {
+  margin-bottom: 12px;
+  padding: 18px;
+  border: 2px dashed var(--border);
+  border-radius: 10px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.85rem;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.dropzone.dragover {
+  border-color: var(--accent);
+  background: #eef3fb;
+  color: var(--accent-dark);
+}
+
+.doc-list {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 16px;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.doc-list-label {
+  width: 100%;
+  margin-bottom: 2px;
+}
+
+.doc-chip {
+  background: #eef3fb;
+  color: var(--accent-dark);
+  border-radius: 6px;
+  padding: 3px 9px;
+}
+
 .messages {
   flex: 1;
   overflow-y: auto;

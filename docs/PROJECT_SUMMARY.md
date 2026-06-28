@@ -30,8 +30,9 @@ code changes).
   Events for a responsive, ChatGPT-like feel.
 - **Multi-format ingestion** — Markdown (`.md`), text (`.txt`), PDF (`.pdf`),
   and Word (`.docx`).
-- **In-browser upload** — add a document with the **+ Add document** button and
-  it is indexed immediately.
+- **In-browser upload** — add a document with the **+ Add document** button or
+  by **dragging and dropping** it onto the page; it is indexed immediately and
+  the list of indexed documents refreshes.
 - **Local-first and free** — uses Ollama with `llama3.2:1b` (chat) and
   `nomic-embed-text` (embeddings); a NumPy cosine-similarity store replaces a
   cloud vector database.
@@ -114,7 +115,7 @@ python -m venv .venv
 .venv\Scripts\python.exe -m pytest
 ```
 
-The suite (24 tests) covers text chunking, the on-disk vector store, multi-format
+The suite (25 tests) covers text chunking, the on-disk vector store, multi-format
 document reading, provider selection, and the API endpoints (chat, streaming,
 upload, validation, and a path-traversal security check). It runs fully offline
 because the language model is mocked.
@@ -137,6 +138,5 @@ because the language model is mocked.
 
 - Conversation memory for follow-up questions.
 - Heading- or paragraph-aware chunking for more precise retrieval.
-- Drag-and-drop upload and a document management view.
 - Dockerfile + docker-compose (app + Ollama) for one-command setup.
 - Authentication and per-user document collections.

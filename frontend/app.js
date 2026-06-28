@@ -5,6 +5,10 @@ const button = form.querySelector("button");
 const fileInput = document.getElementById("file-input");
 const uploadButton = document.getElementById("upload-button");
 const uploadStatus = document.getElementById("upload-status");
+const dropzone = document.getElementById("dropzone");
+const docList = document.getElementById("doc-list");
+
+const ALLOWED_EXTENSIONS = [".md", ".txt", ".pdf", ".docx"];
 
 function addBubble(text, role) {
   const bubble = document.createElement("div");
@@ -123,9 +127,44 @@ uploadButton.addEventListener("keydown", (event) => {
   }
 });
 
-fileInput.addEventListener("change", async () => {
-  const file = fileInput.files[0];
+async function loadDocuments() {
+  try {
+    const response = await fetch("/api/documents");
+    if (!response.ok) return;
+    const data = await response.json();
+    renderDocuments(data.documents || []);
+  } catch {
+    /* ignore */
+  }
+}
+
+function renderDocuments(docs) {
+  docList.innerHTML = "";
+  if (docs.length === 0) {
+    docList.textContent = "No documents indexed yet.";
+    return;
+  }
+  const label = document.createElement("span");
+  label.className = "doc-list-label";
+  label.textContent = `Indexed documents (${docs.length}):`;
+  docList.appendChild(label);
+  docs.forEach((name) => {
+    const chip = document.createElement("span");
+    chip.className = "doc-chip";
+    chip.textContent = name;
+    docList.appendChild(chip);
+  });
+}
+
+async function uploadFile(file) {
   if (!file) return;
+
+  const extension = file.name.slice(file.name.lastIndexOf(".")).toLowerCase();
+  if (!ALLOWED_EXTENSIONS.includes(extension)) {
+    uploadStatus.className = "upload-status error";
+    uploadStatus.textContent = `Unsupported file type “${extension}”. Allowed: ${ALLOWED_EXTENSIONS.join(", ")}.`;
+    return;
+  }
 
   fileInput.disabled = true;
   uploadButton.classList.add("disabled");
@@ -141,6 +180,7 @@ fileInput.addEventListener("change", async () => {
     if (!response.ok) throw new Error(data.detail || `Failed: ${response.status}`);
     uploadStatus.classList.add("ok");
     uploadStatus.textContent = data.message;
+    loadDocuments();
   } catch (error) {
     uploadStatus.classList.add("error");
     uploadStatus.textContent = `Error: ${error.message}`;
@@ -149,4 +189,29 @@ fileInput.addEventListener("change", async () => {
     uploadButton.classList.remove("disabled");
     fileInput.value = "";
   }
+}
+
+fileInput.addEventListener("change", () => uploadFile(fileInput.files[0]));
+
+["dragenter", "dragover"].forEach((type) => {
+  dropzone.addEventListener(type, (event) => {
+    event.preventDefault();
+    dropzone.classList.add("dragover");
+  });
 });
+
+["dragleave", "dragend"].forEach((type) => {
+  dropzone.addEventListener(type, (event) => {
+    event.preventDefault();
+    dropzone.classList.remove("dragover");
+  });
+});
+
+dropzone.addEventListener("drop", (event) => {
+  event.preventDefault();
+  dropzone.classList.remove("dragover");
+  const file = event.dataTransfer?.files?.[0];
+  if (file) uploadFile(file);
+});
+
+loadDocuments();

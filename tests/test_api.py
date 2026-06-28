@@ -35,6 +35,16 @@ def test_chat_requires_question():
     assert response.status_code == 422
 
 
+def test_documents_lists_indexed_files(monkeypatch):
+    monkeypatch.setattr(
+        app_module, "list_documents", lambda: ["handbook.md", "policy.pdf"]
+    )
+
+    response = client.get("/api/documents")
+    assert response.status_code == 200
+    assert response.json() == {"documents": ["handbook.md", "policy.pdf"]}
+
+
 def test_chat_stream_emits_sources_and_tokens(monkeypatch):
     sources = [Source(title="handbook", content="20 days of vacation")]
     monkeypatch.setattr(

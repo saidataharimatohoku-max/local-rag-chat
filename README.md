@@ -15,9 +15,10 @@ and free** with [Ollama](https://ollama.com) — no cloud account required.
 The app retrieves the most relevant chunks from your documents and answers using
 only that context, citing its sources — so it doesn't make things up. Answers
 **stream in token-by-token**, and each cited source expands to show the exact
-retrieved text. You can add documents straight from the browser with the
-**+ Add document** button (Markdown, plain text, PDF, or Word), or drop files
-into the `data/` folder and run the ingest command.
+retrieved text. You can add documents straight from the browser — click
+**+ Add document** or **drag & drop** a file onto the page (Markdown, plain
+text, PDF, or Word) — and the list of indexed documents updates instantly. You
+can also drop files into the `data/` folder and run the ingest command.
 
 ## Project structure
 
