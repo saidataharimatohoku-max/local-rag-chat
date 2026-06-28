@@ -92,6 +92,8 @@ structure = (
     "infra/     Azure Bicep templates (Search + Web App)\n"
     "tests/     Pytest suite (chunking, store, documents, config, API)\n"
     "docs/      Demo screenshot and this summary\n"
+    "scripts/   Word-doc generators and helpers\n"
+    "backup.ps1 Local backup script (git bundle + source zip)\n"
     ".github/   CI (tests) and deploy workflows"
 )
 run = doc.add_paragraph().add_run(structure)
@@ -124,6 +126,13 @@ doc.add_heading("Security notes", level=1)
 for note in [
     "Secrets (.env) and the generated index (data/index.json) are git-ignored.",
     "The upload endpoint validates file extensions against an allow-list and sanitizes filenames to prevent path-traversal writes outside data/.",
+]:
+    doc.add_paragraph(note, style="List Bullet")
+
+doc.add_heading("Backup & versioning", level=1)
+for note in [
+    "Version-controlled with Git and published on GitHub, with tagged releases (e.g. v1.0.0) marking stable, restorable checkpoints.",
+    "backup.ps1 creates two local backups in a sibling folder: a git bundle with the complete commit history (clone it offline with git clone <file>.bundle) and a source zip snapshot of tracked files.",
 ]:
     doc.add_paragraph(note, style="List Bullet")
 

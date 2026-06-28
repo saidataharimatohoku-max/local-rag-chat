@@ -140,3 +140,22 @@ publishes on push to `main`).
 All settings are read from environment variables; see `.env.example` for the
 full list. If Azure OpenAI or Search is not configured, the API responds with a
 helpful message instead of failing.
+
+## Backup & versioning
+
+The project is version-controlled with Git and published on GitHub, with
+tagged releases marking stable checkpoints (see the
+[Releases](https://github.com/saidataharimatohoku-max/local-rag-chat/releases)
+page). To restore a release: `git clone` the repo and `git checkout v1.0.0`.
+
+For an extra local safety net, run the backup script:
+
+```powershell
+.\backup.ps1
+```
+
+It writes two files to a sibling `microsoft-project4-backups` folder:
+
+- a **git bundle** containing the complete commit history — clone it offline
+  with `git clone <file>.bundle restored-project`, and
+- a **source zip** snapshot of the tracked files (no `.venv` or secrets).

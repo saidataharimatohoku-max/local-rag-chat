@@ -84,7 +84,9 @@ frontend/     Static chat UI (HTML/CSS/JS)
 data/         Source documents to index (.md, .txt, .pdf, .docx)
 infra/        Azure Bicep templates (Search + Web App)
 tests/        Pytest suite (chunking, store, documents, config, API)
-docs/         Demo screenshot
+docs/         Demo screenshot and this summary
+scripts/      Word-doc generators and helpers
+backup.ps1    Local backup script (git bundle + source zip)
 .github/      CI (tests) and deploy workflows
 ```
 
@@ -122,6 +124,14 @@ because the language model is mocked.
 - Secrets (`.env`) and the generated index (`data/index.json`) are git-ignored.
 - The upload endpoint validates file extensions against an allow-list and
   sanitizes filenames to prevent path-traversal writes outside `data/`.
+
+## Backup & versioning
+
+- Version-controlled with Git and published on GitHub, with tagged releases
+  (e.g. `v1.0.0`) marking stable, restorable checkpoints.
+- `backup.ps1` creates two local backups in a sibling folder: a **git bundle**
+  with the complete commit history (clone it offline with
+  `git clone <file>.bundle`) and a **source zip** snapshot of tracked files.
 
 ## Possible future enhancements
 
