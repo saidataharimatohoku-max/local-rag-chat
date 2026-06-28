@@ -99,6 +99,21 @@ configured, otherwise it runs fully locally with Ollama. Force it with the
    and asks the chat model to answer using only that context.
 3. `app.py` serves the `/api/chat` endpoint and the static frontend.
 
+## Tests
+
+Unit and API tests run fully offline (the language model is mocked), so no
+Ollama or Azure account is needed:
+
+```powershell
+.venv\Scripts\python.exe -m pip install -r requirements-dev.txt
+.venv\Scripts\python.exe -m pytest
+```
+
+They cover text chunking, the on-disk vector store, multi-format document
+reading, provider selection, and the API endpoints (chat, upload, validation).
+The same suite runs on every push via GitHub Actions
+(`.github/workflows/tests.yml`).
+
 ## Deploy to Azure
 
 Provision infrastructure with the Bicep templates in `infra/`:

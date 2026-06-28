@@ -1,0 +1,76 @@
+"""Tests for the FastAPI endpoints (LLM and ingestion are mocked)."""
+import io
+
+import pytest
+from fastapi.testclient import TestClient
+
+from backend import app as app_module
+from backend.rag import Answer, Source
+
+client = TestClient(app_module.app)
+
+
+def test_health():
+    response = client.get("/api/health")
+    assert response.status_code == 200
+    assert response.json() == {"status": "ok"}
+
+
+def test_chat_returns_answer_and_sources(monkeypatch):
+    fake = Answer(
+        text="Full-time employees get 20 vacation days [handbook].",
+        sources=[Source(title="handbook", content="20 days of vacation")],
+    )
+    monkeypatch.setattr(app_module, "answer_question", lambda q: fake)
+
+    response = client.post("/api/chat", json={"question": "How many vacation days?"})
+    assert response.status_code == 200
+    body = response.json()
+    assert "20 vacation days" in body["answer"]
+    assert body["sources"][0]["title"] == "handbook"
+
+
+def test_chat_requires_question():
+    response = client.post("/api/chat", json={})
+    assert response.status_code == 422
+
+
+def test_upload_indexes_supported_file(monkeypatch, tmp_path):
+    monkeypatch.setattr(app_module, "DATA_DIR", str(tmp_path))
+    monkeypatch.setattr(app_module, "ingest", lambda: 3)
+
+    files = {"file": ("note.txt", io.BytesIO(b"hello world"), "text/plain")}
+    response = client.post("/api/upload", files=files)
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["filename"] == "note.txt"
+    assert body["chunks"] == 3
+    assert (tmp_path / "note.txt").exists()
+
+
+def test_upload_rejects_unsupported_type(monkeypatch, tmp_path):
+    monkeypatch.setattr(app_module, "DATA_DIR", str(tmp_path))
+    # ingest should never be reached for an invalid type.
+    monkeypatch.setattr(
+        app_module, "ingest", lambda: pytest.fail("ingest should not run")
+    )
+
+    files = {"file": ("data.csv", io.BytesIO(b"a,b,c"), "text/csv")}
+    response = client.post("/api/upload", files=files)
+
+    assert response.status_code == 400
+    assert "Unsupported" in response.json()["detail"]
+
+
+def test_upload_sanitizes_path_traversal(monkeypatch, tmp_path):
+    monkeypatch.setattr(app_module, "DATA_DIR", str(tmp_path))
+    monkeypatch.setattr(app_module, "ingest", lambda: 1)
+
+    files = {"file": ("../evil.txt", io.BytesIO(b"x"), "text/plain")}
+    response = client.post("/api/upload", files=files)
+
+    assert response.status_code == 200
+    # The file is written inside DATA_DIR, not the parent directory.
+    assert (tmp_path / "evil.txt").exists()
+    assert not (tmp_path.parent / "evil.txt").exists()
