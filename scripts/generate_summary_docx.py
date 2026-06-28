@@ -34,6 +34,7 @@ for feat in [
     "Streaming responses — answers render token-by-token via Server-Sent Events.",
     "Multi-format ingestion — Markdown (.md), text (.txt), PDF (.pdf), and Word (.docx).",
     "In-browser upload — add a document with the + Add document button or by dragging and dropping it onto the page; it is indexed immediately and the indexed-document list refreshes.",
+    "Agentic mode — an optional agent loop that routes each question (answer directly, search, or ask for clarification), self-evaluates the retrieved context with the model, and rephrases and retries the search when the context is insufficient; the reasoning steps are returned and shown in the UI.",
     "Local-first and free — Ollama with llama3.2:1b (chat) and nomic-embed-text (embeddings); a NumPy cosine-similarity store replaces a cloud vector database.",
     "Cloud-ready — the same code targets Azure OpenAI and Azure AI Search via environment variables; Bicep templates included.",
     "Tested + CI — a pytest suite runs offline (the model is mocked) and on every push via GitHub Actions.",
@@ -43,9 +44,10 @@ for feat in [
 doc.add_heading("Architecture", level=1)
 arch = (
     "Browser (HTML/CSS/JS)\n"
-    "    | POST /api/chat/stream (SSE), POST /api/upload\n"
+    "    | POST /api/chat/stream (SSE), POST /api/agent, POST /api/upload\n"
     "    v\n"
     "FastAPI app (backend/app.py)\n"
+    "    - Agent loop (backend/agent.py): route -> retrieve -> self-check -> rephrase + retry -> answer\n"
     "    v\n"
     "RAG pipeline (backend/rag.py): embed question -> retrieve top-k chunks -> chat model answers\n"
     "    - local: NumPy cosine search (backend/store.py)\n"
@@ -86,7 +88,7 @@ for layer, tech in stack:
 
 doc.add_heading("Project structure", level=1)
 structure = (
-    "backend/   FastAPI app, RAG pipeline, ingestion, vector store, config\n"
+    "backend/   FastAPI app, RAG pipeline, agent loop, ingestion, store, config\n"
     "frontend/  Static chat UI (HTML/CSS/JS)\n"
     "data/      Source documents to index (.md, .txt, .pdf, .docx)\n"
     "infra/     Azure Bicep templates (Search + Web App)\n"
@@ -116,13 +118,14 @@ run.font.size = Pt(9)
 
 doc.add_heading("Testing", level=1)
 doc.add_paragraph(
-    "The suite (35 tests) covers text chunking, the on-disk vector store, "
+    "The suite (48 tests) covers text chunking, the on-disk vector store, "
     "multi-format document reading, provider selection, the RAG pipeline "
     "internals (retrieval, prompt building, answer and streaming generation, "
-    "and the unconfigured-model paths), and the API endpoints (chat, streaming, "
-    "upload, validation, document list, and a path-traversal security check). "
-    "It runs fully offline because the language model is mocked, and reports "
-    "about 79% line coverage of the backend."
+    "and the unconfigured-model paths), the agent loop (routing, retrieval "
+    "self-evaluation, rephrase-and-retry, and clarification paths), and the "
+    "API endpoints (chat, streaming, agent, upload, validation, document list, "
+    "and a path-traversal security check). It runs fully offline because the "
+    "language model is mocked, and reports about 81% line coverage of the backend."
 )
 
 doc.add_heading("Security notes", level=1)
@@ -141,7 +144,7 @@ for note in [
 
 doc.add_heading("Possible future enhancements", level=1)
 for item in [
-    "Conversation memory for follow-up questions.",
+    "Conversation memory for multi-turn agent follow-ups.",
     "Heading- or paragraph-aware chunking for more precise retrieval.",
     "Dockerfile + docker-compose (app + Ollama) for one-command setup.",
     "Authentication and per-user document collections.",

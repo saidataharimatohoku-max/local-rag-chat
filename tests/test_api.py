@@ -45,6 +45,26 @@ def test_documents_lists_indexed_files(monkeypatch):
     assert response.json() == {"documents": ["handbook.md", "policy.pdf"]}
 
 
+def test_agent_endpoint_returns_action_and_steps(monkeypatch):
+    from backend.agent import AgentResult
+
+    result = AgentResult(
+        action="answer",
+        text="Full-time staff get 20 days [handbook].",
+        sources=[Source(title="handbook", content="20 days of vacation")],
+        steps=["Router decided: search", "Answered with retrieved context"],
+    )
+    monkeypatch.setattr(app_module, "run_agent", lambda q: result)
+
+    response = client.post("/api/agent", json={"question": "vacation?"})
+    assert response.status_code == 200
+    body = response.json()
+    assert body["action"] == "answer"
+    assert "20 days" in body["text"]
+    assert body["sources"][0]["title"] == "handbook"
+    assert len(body["steps"]) == 2
+
+
 def test_chat_stream_emits_sources_and_tokens(monkeypatch):
     sources = [Source(title="handbook", content="20 days of vacation")]
     monkeypatch.setattr(

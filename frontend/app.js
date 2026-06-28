@@ -7,6 +7,7 @@ const uploadButton = document.getElementById("upload-button");
 const uploadStatus = document.getElementById("upload-status");
 const dropzone = document.getElementById("dropzone");
 const docList = document.getElementById("doc-list");
+const agentToggle = document.getElementById("agent-toggle");
 
 const ALLOWED_EXTENSIONS = [".md", ".txt", ".pdf", ".docx"];
 
@@ -53,6 +54,92 @@ function addSources(bubble, sources) {
   bubble.appendChild(wrap);
 }
 
+function addSteps(bubble, steps) {
+  if (!steps || steps.length === 0) return;
+  const details = document.createElement("details");
+  details.className = "steps";
+
+  const summary = document.createElement("summary");
+  summary.textContent = `Agent steps (${steps.length})`;
+  details.appendChild(summary);
+
+  const list = document.createElement("ol");
+  steps.forEach((step) => {
+    const item = document.createElement("li");
+    item.textContent = step;
+    list.appendChild(item);
+  });
+  details.appendChild(list);
+
+  bubble.appendChild(details);
+}
+
+async function streamChat(question, pending) {
+  let answerText = "";
+  let sources = [];
+  let started = false;
+
+  const response = await fetch("/api/chat/stream", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ question }),
+  });
+  if (!response.ok || !response.body) {
+    throw new Error(`Request failed: ${response.status}`);
+  }
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+
+  while (true) {
+    const { value, done } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+
+    const events = buffer.split("\n\n");
+    buffer = events.pop();
+
+    for (const block of events) {
+      const eventMatch = block.match(/^event: (.*)$/m);
+      const dataMatch = block.match(/^data: (.*)$/m);
+      if (!eventMatch || !dataMatch) continue;
+      const type = eventMatch[1];
+      const payload = JSON.parse(dataMatch[1]);
+
+      if (type === "sources") {
+        sources = payload;
+      } else if (type === "token") {
+        if (!started) {
+          pending.textContent = "";
+          started = true;
+        }
+        answerText += payload;
+        pending.textContent = answerText;
+        messages.scrollTop = messages.scrollHeight;
+      }
+    }
+  }
+
+  if (!started) pending.textContent = answerText || "(no answer)";
+  addSources(pending, sources);
+}
+
+async function askAgent(question, pending) {
+  const response = await fetch("/api/agent", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ question }),
+  });
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.detail || `Request failed: ${response.status}`);
+
+  pending.textContent = data.text || "(no answer)";
+  if (data.action === "clarify") pending.classList.add("clarify");
+  addSources(pending, data.sources);
+  addSteps(pending, data.steps);
+}
+
 form.addEventListener("submit", async (event) => {
   event.preventDefault();
   const question = input.value.trim();
@@ -63,55 +150,13 @@ form.addEventListener("submit", async (event) => {
   button.disabled = true;
 
   const pending = addBubble("Thinking…", "bot");
-  let answerText = "";
-  let sources = [];
-  let started = false;
 
   try {
-    const response = await fetch("/api/chat/stream", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ question }),
-    });
-    if (!response.ok || !response.body) {
-      throw new Error(`Request failed: ${response.status}`);
+    if (agentToggle.checked) {
+      await askAgent(question, pending);
+    } else {
+      await streamChat(question, pending);
     }
-
-    const reader = response.body.getReader();
-    const decoder = new TextDecoder();
-    let buffer = "";
-
-    while (true) {
-      const { value, done } = await reader.read();
-      if (done) break;
-      buffer += decoder.decode(value, { stream: true });
-
-      const events = buffer.split("\n\n");
-      buffer = events.pop();
-
-      for (const block of events) {
-        const eventMatch = block.match(/^event: (.*)$/m);
-        const dataMatch = block.match(/^data: (.*)$/m);
-        if (!eventMatch || !dataMatch) continue;
-        const type = eventMatch[1];
-        const payload = JSON.parse(dataMatch[1]);
-
-        if (type === "sources") {
-          sources = payload;
-        } else if (type === "token") {
-          if (!started) {
-            pending.textContent = "";
-            started = true;
-          }
-          answerText += payload;
-          pending.textContent = answerText;
-          messages.scrollTop = messages.scrollHeight;
-        }
-      }
-    }
-
-    if (!started) pending.textContent = answerText || "(no answer)";
-    addSources(pending, sources);
   } catch (error) {
     pending.textContent = `Error: ${error.message}`;
   } finally {
@@ -119,6 +164,7 @@ form.addEventListener("submit", async (event) => {
     input.focus();
   }
 });
+
 
 uploadButton.addEventListener("keydown", (event) => {
   if (event.key === "Enter" || event.key === " ") {

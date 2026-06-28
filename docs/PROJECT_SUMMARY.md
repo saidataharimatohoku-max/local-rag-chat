@@ -33,6 +33,11 @@ code changes).
 - **In-browser upload** — add a document with the **+ Add document** button or
   by **dragging and dropping** it onto the page; it is indexed immediately and
   the list of indexed documents refreshes.
+- **Agentic mode** — an optional agent loop that **routes** each question
+  (answer directly, search, or ask for clarification), **self-evaluates** the
+  retrieved context with the model, and **rephrases and retries** the search
+  when the context is insufficient (up to a retry limit); the reasoning steps
+  are returned and shown in the UI.
 - **Local-first and free** — uses Ollama with `llama3.2:1b` (chat) and
   `nomic-embed-text` (embeddings); a NumPy cosine-similarity store replaces a
   cloud vector database.
@@ -45,10 +50,12 @@ code changes).
 
 ```
 Browser (HTML/CSS/JS)
-        |  POST /api/chat/stream (SSE)   POST /api/upload
+        |  POST /api/chat/stream (SSE)   POST /api/agent   POST /api/upload
         v
 FastAPI app  (backend/app.py)
         |
+        +--> Agent loop (backend/agent.py): route -> retrieve -> self-check
+        |                                    -> rephrase + retry -> answer
         v
 RAG pipeline (backend/rag.py)
    embed question  ->  retrieve top-k chunks  ->  chat model answers
@@ -80,7 +87,7 @@ force either mode.
 ## Project structure
 
 ```
-backend/      FastAPI app, RAG pipeline, ingestion, vector store, config
+backend/      FastAPI app, RAG pipeline, agent loop, ingestion, store, config
 frontend/     Static chat UI (HTML/CSS/JS)
 data/         Source documents to index (.md, .txt, .pdf, .docx)
 infra/        Azure Bicep templates (Search + Web App)
@@ -115,12 +122,14 @@ python -m venv .venv
 .venv\Scripts\python.exe -m pytest
 ```
 
-The suite (35 tests) covers text chunking, the on-disk vector store, multi-format
+The suite (48 tests) covers text chunking, the on-disk vector store, multi-format
 document reading, provider selection, the RAG pipeline internals (retrieval,
 prompt building, answer and streaming generation, and the unconfigured-model
-paths), and the API endpoints (chat, streaming, upload, validation, document
-list, and a path-traversal security check). It runs fully offline because the
-language model is mocked, and reports ~79% line coverage of the backend.
+paths), the agent loop (routing, retrieval self-evaluation, rephrase-and-retry,
+and clarification paths), and the API endpoints (chat, streaming, agent, upload,
+validation, document list, and a path-traversal security check). It runs fully
+offline because the language model is mocked, and reports ~81% line coverage of
+the backend.
 
 ## Security notes
 
@@ -138,7 +147,7 @@ language model is mocked, and reports ~79% line coverage of the backend.
 
 ## Possible future enhancements
 
-- Conversation memory for follow-up questions.
+- Conversation memory for multi-turn agent follow-ups.
 - Heading- or paragraph-aware chunking for more precise retrieval.
 - Dockerfile + docker-compose (app + Ollama) for one-command setup.
 - Authentication and per-user document collections.

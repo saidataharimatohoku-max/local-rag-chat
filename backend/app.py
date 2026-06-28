@@ -12,6 +12,7 @@ from pydantic import BaseModel
 
 from .ingest import DATA_DIR, SUPPORTED_EXTENSIONS, ingest, list_documents
 from .rag import answer_question, stream_answer
+from .agent import run_agent
 
 FRONTEND_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "frontend")
 
@@ -45,6 +46,13 @@ class UploadResponse(BaseModel):
     message: str
 
 
+class AgentResponse(BaseModel):
+    action: str
+    text: str
+    sources: list[SourceModel]
+    steps: list[str]
+
+
 @app.get("/api/health")
 def health() -> dict[str, str]:
     return {"status": "ok"}
@@ -62,6 +70,18 @@ def chat(request: ChatRequest) -> ChatResponse:
     return ChatResponse(
         answer=result.text,
         sources=[SourceModel(title=s.title, content=s.content) for s in result.sources],
+    )
+
+
+@app.post("/api/agent", response_model=AgentResponse)
+def agent(request: ChatRequest) -> AgentResponse:
+    """Run the agentic RAG pipeline (routing, self-evaluation, clarification)."""
+    result = run_agent(request.question)
+    return AgentResponse(
+        action=result.action,
+        text=result.text,
+        sources=[SourceModel(title=s.title, content=s.content) for s in result.sources],
+        steps=result.steps,
     )
 
 

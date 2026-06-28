@@ -23,10 +23,16 @@ retrieved text. You can add documents straight from the browser — click
 text, PDF, or Word) — and the list of indexed documents updates instantly. You
 can also drop files into the `data/` folder and run the ingest command.
 
+Flip on **Agent mode** for an agentic workflow: the app routes each question
+(answer directly, search the documents, or ask a clarifying question),
+self-evaluates whether the retrieved context is good enough, and automatically
+rephrases and retries the search when it isn't — showing its reasoning steps
+alongside the answer.
+
 ## Project structure
 
 ```
-backend/      FastAPI app, RAG pipeline, ingestion, clients, config
+backend/      FastAPI app, RAG pipeline, agent loop, ingestion, clients, config
 frontend/     Static chat UI (HTML/CSS/JS)
 data/         Source documents to index (.md, .txt, .pdf, .docx)
 infra/        Azure Bicep templates (Search + Web App)
