@@ -134,7 +134,6 @@ header h1 {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: 16px;
   font-size: 0.9rem;
   cursor: pointer;
   flex-wrap: wrap;
@@ -147,6 +146,31 @@ header h1 {
 .agent-hint {
   color: var(--muted);
   font-size: 0.8rem;
+}
+
+.controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.new-chat-button {
+  padding: 7px 14px;
+  background: var(--panel);
+  color: var(--accent);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.new-chat-button:hover {
+  background: #eef3fb;
+  border-color: var(--accent);
 }
 
 .bubble.clarify {

@@ -27,11 +27,14 @@
           <span class="dropzone-hint">Drag &amp; drop a document here to index it</span>
         </div>
         <div id="doc-list" class="doc-list" aria-live="polite"></div>
-        <label class="agent-toggle">
-          <input type="checkbox" id="agent-toggle" />
-          <span>Agent mode</span>
-          <span class="agent-hint">routes, self-checks retrieval, and can ask clarifying questions</span>
-        </label>
+        <div class="controls">
+          <label class="agent-toggle">
+            <input type="checkbox" id="agent-toggle" />
+            <span>Agent mode</span>
+            <span class="agent-hint">routes, self-checks retrieval, and can ask clarifying questions</span>
+          </label>
+          <button type="button" id="new-chat" class="new-chat-button">🔄 New chat</button>
+        </div>
       </header>
 
       <section id="messages" class="messages" aria-live="polite"></section>

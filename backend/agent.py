@@ -19,7 +19,7 @@ import json
 from dataclasses import dataclass, field
 
 from .clients import get_llm
-from .rag import Source, _build_messages, retrieve
+from .rag import Source, _build_messages, retrieve, condense_question
 
 MAX_RETRIES = 2  # extra search attempts after the first
 
@@ -83,13 +83,14 @@ def _parse_json(text: str) -> dict:
         return {}
 
 
-def _route(question: str) -> tuple[str, str]:
-    reply = _chat(
-        [
-            {"role": "system", "content": ROUTER_PROMPT},
-            {"role": "user", "content": question},
-        ]
-    )
+def _route(question: str, history: list[tuple[str, str]]) -> tuple[str, str]:
+    """Route a question to answer/search/clarify based on conversation history."""
+    messages = [{"role": "system", "content": ROUTER_PROMPT}]
+    for role, content in history:
+        messages.append({"role": role, "content": content})
+    messages.append({"role": "user", "content": question})
+    
+    reply = _chat(messages)
     data = _parse_json(reply or "")
     action = data.get("action")
     detail = (data.get("detail") or "").strip()
@@ -125,19 +126,26 @@ def _rephrase(question: str) -> str:
     return (reply or question).strip() or question
 
 
-def _answer(question: str, sources: list[Source]) -> str:
-    messages = _build_messages(question, sources)
+def _answer(question: str, sources: list[Source], history: list[tuple[str, str]]) -> str:
+    """Generate an answer from sources with conversation history."""
+    messages = _build_messages(question, sources, history=history)
     return _chat(messages, temperature=0.2) or ""
 
 
-def run_agent(question: str) -> AgentResult:
-    """Route the question, optionally retrieve and self-correct, then answer."""
+def run_agent(question: str, history: list[tuple[str, str]] | None = None) -> AgentResult:
+    """Route the question, optionally retrieve and self-correct, then answer.
+    
+    Args:
+        question: The user's current question
+        history: Optional list of (role, content) tuples from prior turns
+    """
+    history = history or []
     steps: list[str] = []
 
     if get_llm() is None:
         return AgentResult(action="answer", text=UNCONFIGURED_MESSAGE, steps=steps)
 
-    action, detail = _route(question)
+    action, detail = _route(question, history)
     steps.append(f"Router decided: {action}")
 
     if action == "clarify":
@@ -149,18 +157,19 @@ def run_agent(question: str) -> AgentResult:
 
     if action == "answer":
         steps.append("Answered directly without retrieval")
-        return AgentResult(action="answer", text=_answer(question, []), steps=steps)
+        return AgentResult(action="answer", text=_answer(question, [], history), steps=steps)
 
     # action == "search"
-    query = detail or question
-    sources = retrieve(query)
+    # Condense the query with history for better retrieval
+    query = condense_question(detail or question, history)
+    sources = retrieve(query, history=history)
     steps.append(f"Searched '{query}' \u2192 {len(sources)} chunk(s)")
 
     attempts = 0
     while attempts < MAX_RETRIES and not _is_sufficient(question, sources):
         attempts += 1
         query = _rephrase(question)
-        sources = retrieve(query)
+        sources = retrieve(query, history=history)
         steps.append(
             f"Context insufficient; retried with '{query}' \u2192 "
             f"{len(sources)} chunk(s)"
@@ -169,7 +178,7 @@ def run_agent(question: str) -> AgentResult:
     steps.append("Answered with retrieved context")
     return AgentResult(
         action="answer",
-        text=_answer(question, sources),
+        text=_answer(question, sources, history),
         sources=sources,
         steps=steps,
     )

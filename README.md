@@ -18,7 +18,11 @@ and free** with [Ollama](https://ollama.com) — no cloud account required.
 The app retrieves the most relevant chunks from your documents and answers using
 only that context, citing its sources — so it doesn't make things up. Answers
 **stream in token-by-token**, and each cited source expands to show the exact
-retrieved text. You can add documents straight from the browser — click
+retrieved text. The app supports **multi-turn conversations**: follow-up
+questions like "what about its cost?" or "and why?" understand the prior
+context, with history-aware retrieval ensuring relevant documents are found
+even for context-dependent queries. Click **🔄 New chat** to start a fresh
+conversation. You can add documents straight from the browser — click
 **+ Add document** or **drag & drop** a file onto the page (Markdown, plain
 text, PDF, or Word) — and the list of indexed documents updates instantly. You
 can also drop files into the `data/` folder and run the ingest command.
@@ -110,7 +114,12 @@ configured, otherwise it runs fully locally with Ollama. Force it with the
    or local Ollama), and stores them in Azure AI Search or a local index.
 2. On a question, `rag.py` embeds the query, retrieves the top matching chunks,
    and asks the chat model to answer using only that context.
-3. `app.py` serves the static frontend, a JSON `/api/chat` endpoint, and a
+3. For multi-turn conversations, the app condenses follow-up questions with
+   prior history into standalone search queries ("what about its cost?"
+   becomes "what about the product's cost?" if the prior question was about a
+   product), then threads the conversation history into the final answer
+   generation so the model sees the full context.
+4. `app.py` serves the static frontend, a JSON `/api/chat` endpoint, and a
    streaming `/api/chat/stream` endpoint (Server-Sent Events) that the UI uses
    to render answers token-by-token.
 
@@ -126,9 +135,12 @@ Ollama or Azure account is needed:
 
 They cover text chunking, the on-disk vector store, multi-format document
 reading, provider selection, the RAG pipeline internals (retrieval, prompt
-building, answer and streaming generation, and the unconfigured-model paths),
-and the API endpoints (chat, streaming, upload, validation, document list).
-The same suite runs on every push via GitHub Actions
+building, answer and streaming generation, conversation history threading,
+history-aware query condensation, and the unconfigured-model paths), the
+agentic pipeline (routing with history, self-evaluation, retry logic), and the
+API endpoints (chat, streaming, agent, upload, validation, document list,
+conversation history, and backward compatibility). **64 tests**, **83%
+coverage**. The same suite runs on every push via GitHub Actions
 (`.github/workflows/tests.yml`).
 
 To measure coverage and refresh the badge:

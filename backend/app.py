@@ -8,7 +8,7 @@ from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, field_validator
 
 from .ingest import DATA_DIR, SUPPORTED_EXTENSIONS, ingest, list_documents
 from .rag import answer_question, stream_answer
@@ -16,7 +16,7 @@ from .agent import run_agent
 
 FRONTEND_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "frontend")
 
-app = FastAPI(title="RAG Chat API", version="1.0.0")
+app = FastAPI(title="RAG Chat API", version="1.4.0")
 
 app.add_middleware(
     CORSMiddleware,
@@ -26,8 +26,21 @@ app.add_middleware(
 )
 
 
+class MessageModel(BaseModel):
+    role: str
+    content: str
+
+
 class ChatRequest(BaseModel):
     question: str
+    history: list[MessageModel] = Field(default_factory=list)
+
+    @field_validator("history")
+    @classmethod
+    def validate_history_length(cls, v):
+        if len(v) > 20:
+            raise ValueError("Conversation history limited to 20 messages")
+        return v
 
 
 class SourceModel(BaseModel):
@@ -66,7 +79,8 @@ def documents() -> dict[str, list[str]]:
 
 @app.post("/api/chat", response_model=ChatResponse)
 def chat(request: ChatRequest) -> ChatResponse:
-    result = answer_question(request.question)
+    history = [(m.role, m.content) for m in request.history]
+    result = answer_question(request.question, history=history)
     return ChatResponse(
         answer=result.text,
         sources=[SourceModel(title=s.title, content=s.content) for s in result.sources],
@@ -76,7 +90,8 @@ def chat(request: ChatRequest) -> ChatResponse:
 @app.post("/api/agent", response_model=AgentResponse)
 def agent(request: ChatRequest) -> AgentResponse:
     """Run the agentic RAG pipeline (routing, self-evaluation, clarification)."""
-    result = run_agent(request.question)
+    history = [(m.role, m.content) for m in request.history]
+    result = run_agent(request.question, history=history)
     return AgentResponse(
         action=result.action,
         text=result.text,
@@ -92,7 +107,8 @@ def _sse(event: str, data) -> str:
 @app.post("/api/chat/stream")
 def chat_stream(request: ChatRequest) -> StreamingResponse:
     """Stream the answer token-by-token as Server-Sent Events."""
-    sources, tokens = stream_answer(request.question)
+    history = [(m.role, m.content) for m in request.history]
+    sources, tokens = stream_answer(request.question, history=history)
 
     def event_stream():
         yield _sse(

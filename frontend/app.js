@@ -8,8 +8,12 @@ const uploadStatus = document.getElementById("upload-status");
 const dropzone = document.getElementById("dropzone");
 const docList = document.getElementById("doc-list");
 const agentToggle = document.getElementById("agent-toggle");
+const newChatButton = document.getElementById("new-chat");
 
 const ALLOWED_EXTENSIONS = [".md", ".txt", ".pdf", ".docx"];
+
+// Conversation history: array of {role: "user"|"assistant", content: string}
+let conversationHistory = [];
 
 function addBubble(text, role) {
   const bubble = document.createElement("div");
@@ -82,7 +86,7 @@ async function streamChat(question, pending) {
   const response = await fetch("/api/chat/stream", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ question }),
+    body: JSON.stringify({ question, history: conversationHistory }),
   });
   if (!response.ok || !response.body) {
     throw new Error(`Request failed: ${response.status}`);
@@ -123,19 +127,23 @@ async function streamChat(question, pending) {
 
   if (!started) pending.textContent = answerText || "(no answer)";
   addSources(pending, sources);
+  
+  return answerText;
 }
 
 async function askAgent(question, pending) {
   const response = await fetch("/api/agent", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ question }),
+    method: "POST",, history: conversationHistory }),
   });
   const data = await response.json();
   if (!response.ok) throw new Error(data.detail || `Request failed: ${response.status}`);
 
   pending.textContent = data.text || "(no answer)";
   if (data.action === "clarify") pending.classList.add("clarify");
+  addSources(pending, data.sources);
+  addSteps(pending, data.steps);
+  
+  return data.text || "") pending.classList.add("clarify");
   addSources(pending, data.sources);
   addSteps(pending, data.steps);
 }
@@ -150,17 +158,28 @@ form.addEventListener("submit", async (event) => {
   button.disabled = true;
 
   const pending = addBubble("Thinking…", "bot");
-
-  try {
+let answerText;
     if (agentToggle.checked) {
-      await askAgent(question, pending);
+      answerText = await askAgent(question, pending);
     } else {
-      await streamChat(question, pending);
+      answerText = await streamChat(question, pending);
     }
+    
+    // Add to conversation history
+    conversationHistory.push({ role: "user", content: question });
+    conversationHistory.push({ role: "assistant", content: answerText });
   } catch (error) {
     pending.textContent = `Error: ${error.message}`;
   } finally {
     button.disabled = false;
+    input.focus();
+  }
+});
+
+newChatButton.addEventListener("click", () => {
+  conversationHistory = [];
+  messages.innerHTML = "";
+  input.focus(); button.disabled = false;
     input.focus();
   }
 });

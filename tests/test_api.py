@@ -21,7 +21,7 @@ def test_chat_returns_answer_and_sources(monkeypatch):
         text="Full-time employees get 20 vacation days [handbook].",
         sources=[Source(title="handbook", content="20 days of vacation")],
     )
-    monkeypatch.setattr(app_module, "answer_question", lambda q: fake)
+    monkeypatch.setattr(app_module, "answer_question", lambda q, history: fake)
 
     response = client.post("/api/chat", json={"question": "How many vacation days?"})
     assert response.status_code == 200
@@ -54,7 +54,7 @@ def test_agent_endpoint_returns_action_and_steps(monkeypatch):
         sources=[Source(title="handbook", content="20 days of vacation")],
         steps=["Router decided: search", "Answered with retrieved context"],
     )
-    monkeypatch.setattr(app_module, "run_agent", lambda q: result)
+    monkeypatch.setattr(app_module, "run_agent", lambda q, history: result)
 
     response = client.post("/api/agent", json={"question": "vacation?"})
     assert response.status_code == 200
@@ -70,7 +70,7 @@ def test_chat_stream_emits_sources_and_tokens(monkeypatch):
     monkeypatch.setattr(
         app_module,
         "stream_answer",
-        lambda q: (sources, iter(["Full-time ", "employees ", "get 20 days."])),
+        lambda q, history: (sources, iter(["Full-time ", "employees ", "get 20 days."])),
     )
 
     response = client.post("/api/chat/stream", json={"question": "vacation?"})
@@ -98,6 +98,99 @@ def test_upload_indexes_supported_file(monkeypatch, tmp_path):
     assert body["filename"] == "note.txt"
     assert body["chunks"] == 3
     assert (tmp_path / "note.txt").exists()
+
+
+def test_chat_accepts_conversation_history(monkeypatch):
+    """Test that /api/chat accepts and passes conversation history."""
+    received_history = []
+
+    def capture_history(q, history):
+        received_history.extend(history)
+        return Answer(text="Follow-up answer", sources=[])
+
+    monkeypatch.setattr(app_module, "answer_question", capture_history)
+
+    response = client.post(
+        "/api/chat",
+        json={
+            "question": "What about cost?",
+            "history": [
+                {"role": "user", "content": "Tell me about the product"},
+                {"role": "assistant", "content": "It's a great product"}
+            ]
+        }
+    )
+    assert response.status_code == 200
+    assert len(received_history) == 2
+    assert received_history[0] == ("user", "Tell me about the product")
+    assert received_history[1] == ("assistant", "It's a great product")
+
+
+def test_chat_backward_compatible_without_history(monkeypatch):
+    """Test that requests without history still work (backward compatibility)."""
+    fake = Answer(text="Answer without history", sources=[])
+    monkeypatch.setattr(app_module, "answer_question", lambda q, history: fake)
+
+    response = client.post("/api/chat", json={"question": "Simple question?"})
+    assert response.status_code == 200
+    assert response.json()["answer"] == "Answer without history"
+
+
+def test_chat_rejects_excessive_history():
+    """Test that history is limited to 20 messages."""
+    history = [{"role": "user", "content": f"turn {i}"} for i in range(21)]
+    response = client.post(
+        "/api/chat",
+        json={"question": "test", "history": history}
+    )
+    assert response.status_code == 422
+    assert "history" in response.text.lower()
+
+
+def test_agent_accepts_conversation_history(monkeypatch):
+    """Test that /api/agent accepts and passes conversation history."""
+    from backend.agent import AgentResult
+
+    received_history = []
+
+    def capture_history(q, history):
+        received_history.extend(history)
+        return AgentResult(action="answer", text="Agent answer", sources=[], steps=[])
+
+    monkeypatch.setattr(app_module, "run_agent", capture_history)
+
+    response = client.post(
+        "/api/agent",
+        json={
+            "question": "follow-up?",
+            "history": [{"role": "user", "content": "first question"}]
+        }
+    )
+    assert response.status_code == 200
+    assert len(received_history) == 1
+    assert received_history[0] == ("user", "first question")
+
+
+def test_stream_accepts_conversation_history(monkeypatch):
+    """Test that /api/chat/stream accepts and passes conversation history."""
+    received_history = []
+
+    def capture_stream(q, history):
+        received_history.extend(history)
+        return [], iter(["token"])
+
+    monkeypatch.setattr(app_module, "stream_answer", capture_stream)
+
+    response = client.post(
+        "/api/chat/stream",
+        json={
+            "question": "follow-up?",
+            "history": [{"role": "user", "content": "prior question"}]
+        }
+    )
+    assert response.status_code == 200
+    assert len(received_history) == 1
+    assert received_history[0] == ("user", "prior question")
 
 
 def test_upload_rejects_unsupported_type(monkeypatch, tmp_path):

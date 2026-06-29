@@ -26,6 +26,9 @@ code changes).
 
 - **Grounded answers with citations** — responses are based on retrieved
   document chunks, each shown as an expandable source snippet.
+- **Multi-turn conversations** — follow-up questions ("what about X?", "and
+  why?") understand prior context; history-aware retrieval condenses follow-ups
+  into standalone queries for better document retrieval.
 - **Streaming responses** — answers render token-by-token via Server-Sent
   Events for a responsive, ChatGPT-like feel.
 - **Multi-format ingestion** — Markdown (`.md`), text (`.txt`), PDF (`.pdf`),
@@ -43,8 +46,8 @@ code changes).
   cloud vector database.
 - **Cloud-ready** — the same code targets Azure OpenAI and Azure AI Search by
   setting environment variables; Bicep templates are included.
-- **Tested + CI** — a pytest suite runs offline (the model is mocked) and on
-  every push via GitHub Actions.
+- **Tested + CI** — a pytest suite (64 tests, 83% coverage) runs offline (the
+  model is mocked) and on every push via GitHub Actions.
 
 ## Architecture
 
